@@ -1,39 +1,41 @@
 # rk-Web
 
-This template should help get you started developing with Vue 3 in Vite.
+Este proyecto proporciona un servicio CRUD para cinemáticas de servomotores, con un enfoque en los servomotores Dynamixel utilizados en el OpenBot V1. La web facilita el almacenamiento de datos en un servidor externo.
 
-## Recommended IDE Setup
+## Funcionalidades
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- Importar datos desde un archivo `.txt`.
+- Exportar datos a un servidor externo (Supabase).
+- Crear, editar y eliminar registros de datos cinemáticos.
 
-## Type Support for `.vue` Imports in TS
+## Configuración del Proyecto
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+1. Instalar dependencias:
 
-## Customize configuration
+   ```sh
+   bun install
+   ```
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+2. Compilar y recargar en caliente para desarrollo:
 
-## Project Setup
+   ```sh
+   bun dev
+   ```
 
-```sh
-bun install
+3. Compilar y minificar para producción:
+   ```sh
+   bun run build
+   ```
+
+## Variables de Entorno
+
+Configura las siguientes variables en el archivo `.env`:
+
+```
+VITE_SUPABASE_URL=tu_supabase_url
+VITE_SUPABASE_KEY=tu_supabase_key
 ```
 
-### Compile and Hot-Reload for Development
+## Licencia
 
-```sh
-bun dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-bun run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-bun lint
-```
+Este proyecto está bajo la licencia MIT.

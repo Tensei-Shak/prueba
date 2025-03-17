@@ -13,9 +13,15 @@
       </div>
     </div>
 
+    <!-- Modo Local: Botones para trabajar con datos locales -->
+    <div v-if="isLocalMode" class="container mb-3 d-flex gap-2">
+      <button @click="addLocalData" class="btn btn-success">Add Local Data</button>
+      <button @click="saveLocalChanges" class="btn btn-warning">Save Local Changes</button>
+    </div>
+
     <!-- Exportar datos -->
     <div class="container mb-3 d-flex gap-2">
-      <button @click="exportDataToSupabase" class="btn btn-success">
+      <button @click="exportDataToSupabase" :disabled="isLocalMode" class="btn btn-success">
         Export Data to Supabase
       </button>
       <button @click="exportGroupDataToTxt" class="btn btn-info">
@@ -87,11 +93,11 @@
 
             <!-- Botones Save/Update -->
             <div class="d-flex gap-2">
-              <button @click="store.saveToSupabase" type="button" class="btn btn-success">
-                Save
+              <button @click="store.saveToSupabase" :disabled="isLocalMode" type="button" class="btn btn-success">
+                Save to Supabase
               </button>
-              <button @click="store.updateInSupabase" type="button" class="btn btn-warning">
-                Update
+              <button @click="store.updateInSupabase" :disabled="isLocalMode" type="button" class="btn btn-warning">
+                Update in Supabase
               </button>
             </div>
           </div>
@@ -137,9 +143,18 @@
 
 <script lang="ts" setup>
 import { useKinematicStore } from '@/stores/kinematic.ts';
-import { supabase } from '@/utils/supabase.ts';
-import { ref } from 'vue';
 import Swal from 'sweetalert2';
+import { ref } from 'vue';
+import { supabase } from './utils/supabase';
+
+// Interfaz para validar los datos importados
+interface ImportedDataKinematic {
+  group_id: string;
+  servo_id: number;
+  direction: 'Normal' | 'Reverse';
+  min_value: number;
+  max_value: number;
+}
 
 const store = useKinematicStore();
 const numberServoIds = ref<number[]>([1, 2, 3, 4, 5, 6]);
@@ -148,6 +163,7 @@ const directionServo = ref<string[]>(['Normal', 'Reverse']);
 // Variables para manejar el archivo
 const fileContent = ref<string>('');
 const uploadedFile = ref<File | null>(null);
+const isLocalMode = ref<boolean>(false); // Indica si estamos en modo local
 
 // Manejar la carga del archivo
 const handleFileUpload = (event: Event) => {
@@ -173,7 +189,7 @@ const importData = () => {
   }
 
   try {
-    const parsedData = JSON.parse(fileContent.value);
+    const parsedData = JSON.parse(fileContent.value) as ImportedDataKinematic[];
     if (!Array.isArray(parsedData)) {
       Swal.fire({
         icon: 'error',
@@ -182,6 +198,31 @@ const importData = () => {
       });
       return;
     }
+
+    // Validar cada registro importado
+    const isValid = parsedData.every((item) => {
+      return (
+        typeof item.group_id === 'string' &&
+        typeof item.servo_id === 'number' &&
+        ['Normal', 'Reverse'].includes(item.direction) &&
+        typeof item.min_value === 'number' &&
+        typeof item.max_value === 'number' &&
+        item.min_value >= 0 &&
+        item.max_value <= 1023 &&
+        item.min_value <= item.max_value
+      );
+    });
+
+    if (!isValid) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Datos inválidos',
+        text: 'El archivo contiene registros con datos incorrectos.',
+      });
+      return;
+    }
+
+    // Cargar los datos en memoria y activar el modo local
     store.groupData = parsedData.map((item) => ({
       group_id: item.group_id,
       servo_id: item.servo_id,
@@ -189,7 +230,7 @@ const importData = () => {
       min_value: item.min_value,
       max_value: item.max_value,
     }));
-
+    isLocalMode.value = true; // Activar modo local
     Swal.fire({
       icon: 'success',
       title: 'Datos importados',
@@ -205,6 +246,54 @@ const importData = () => {
   }
 };
 
+const addLocalData = () => {
+  // Validar campos antes de agregar
+  if (
+    !store.createKinematic.group_id ||
+    !store.createKinematic.servo_id ||
+    !store.createKinematic.direction ||
+    store.createKinematic.min_value === null ||
+    store.createKinematic.max_value === null ||
+    store.createKinematic.min_value < 0 ||
+    store.createKinematic.max_value > 1023 ||
+    store.createKinematic.min_value > store.createKinematic.max_value
+  ) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Campos incompletos o inválidos',
+      text: 'Por favor, completa todos los campos correctamente.',
+    });
+    return;
+  }
+
+  // Agregar nuevos datos al groupData local
+  store.groupData.push({ ...store.createKinematic });
+  store.resetKinematic(); // Limpiar el formulario
+  Swal.fire({
+    icon: 'success',
+    title: 'Datos agregados',
+    text: 'Los datos se han agregado correctamente.',
+  });
+};
+
+const saveLocalChanges = () => {
+  // Validar que haya datos en groupData
+  if (store.groupData.length === 0) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Sin datos',
+      text: 'No hay datos locales para guardar.',
+    });
+    return;
+  }
+
+  Swal.fire({
+    icon: 'success',
+    title: 'Cambios guardados',
+    text: 'Los cambios locales se han guardado correctamente.',
+  });
+};
+
 const exportDataToSupabase = async () => {
   if (store.groupData.length === 0) {
     Swal.fire({
@@ -214,6 +303,7 @@ const exportDataToSupabase = async () => {
     });
     return;
   }
+
   try {
     const { error } = await supabase.from('kinematic_groups').insert(store.groupData);
 
@@ -242,7 +332,6 @@ const exportDataToSupabase = async () => {
   }
 };
 
-// Función para exportar datos a un archivo .txt en formato JSON
 const exportGroupDataToTxt = () => {
   if (store.groupData.length === 0) {
     Swal.fire({

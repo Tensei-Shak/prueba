@@ -21,9 +21,10 @@ export const useKinematicStore = defineStore('kinematic', {
       min_value: 0,
       max_value: 1023,
     } as DataKinematic,
-    groupData: [] as DataKinematic[],
+    groupData: [] as DataKinematic[], // Datos en memoria (pueden ser locales o de Supabase)
   }),
   actions: {
+    // Buscar datos por Group ID en Supabase
     async fetchByGroupId() {
       if (!this.createKinematic.group_id) {
         Swal.fire({
@@ -68,6 +69,7 @@ export const useKinematicStore = defineStore('kinematic', {
       }
     },
 
+    // Guardar datos en Supabase
     async saveToSupabase() {
       if (
         !this.createKinematic.group_id ||
@@ -110,7 +112,6 @@ export const useKinematicStore = defineStore('kinematic', {
             text: 'Los datos se han guardado correctamente.',
           })
           this.resetKinematic()
-          await this.fetchByGroupId()
         }
       } catch (err) {
         console.error('Error inesperado:', err)
@@ -122,6 +123,7 @@ export const useKinematicStore = defineStore('kinematic', {
       }
     },
 
+    // Actualizar datos en Supabase
     async updateInSupabase() {
       if (!this.createKinematic.id) {
         Swal.fire({
@@ -159,7 +161,6 @@ export const useKinematicStore = defineStore('kinematic', {
             text: 'Los datos se han actualizado correctamente.',
           })
           this.resetKinematic()
-          await this.fetchByGroupId()
         }
       } catch (err) {
         console.error('Error inesperado:', err)
@@ -171,6 +172,7 @@ export const useKinematicStore = defineStore('kinematic', {
       }
     },
 
+    // Eliminar un registro en Supabase
     async deleteItem(id: number) {
       if (!id) {
         Swal.fire({
@@ -198,7 +200,6 @@ export const useKinematicStore = defineStore('kinematic', {
             title: 'Registro eliminado',
             text: 'El registro se ha eliminado correctamente.',
           })
-          await this.fetchByGroupId()
         }
       } catch (err) {
         console.error('Error inesperado:', err)
@@ -210,10 +211,12 @@ export const useKinematicStore = defineStore('kinematic', {
       }
     },
 
+    // Editar un elemento en memoria
     editItem(item: DataKinematic) {
       this.createKinematic = { ...item }
     },
 
+    // Resetear el formulario
     resetKinematic() {
       this.createKinematic = {
         id: undefined,
