@@ -1,5 +1,5 @@
 <template>
-  <div class="card p-4 m-5">
+  <div class="">
     <div class="d-flex justify-content-center">
       <h2>Create/Edit Group Kinematic</h2>
     </div>
