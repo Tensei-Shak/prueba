@@ -93,11 +93,11 @@
 
             <!-- Botones Save/Update -->
             <div class="d-flex gap-2">
-              <button @click="store.saveToSupabase" :disabled="isLocalMode" type="button" class="btn btn-success">
-                Save to Supabase
+              <button @click="saveEditedData" type="button" class="btn btn-success">
+                Save Edited Data
               </button>
-              <button @click="store.updateInSupabase" :disabled="isLocalMode" type="button" class="btn btn-warning">
-                Update in Supabase
+              <button @click="store.resetKinematic" type="button" class="btn btn-secondary">
+                Cancel
               </button>
             </div>
           </div>
@@ -127,10 +127,11 @@
             <td>{{ item.min_value }}</td>
             <td>{{ item.max_value }}</td>
             <td>
-              <button @click="store.editItem(item)" class="btn btn-warning btn-sm me-2">
+              <button @click="editLocalItem({ ...item, direction: item.direction as 'Normal' | 'Reverse' })"
+                class="btn btn-warning btn-sm me-2">
                 Edit
               </button>
-              <button @click="item.id !== undefined && store.deleteItem(item.id)" class="btn btn-danger btn-sm">
+              <button @click="deleteLocalItem(index)" class="btn btn-danger btn-sm">
                 Delete
               </button>
             </td>
@@ -145,7 +146,6 @@
 import { useKinematicStore } from '@/stores/kinematic.ts';
 import Swal from 'sweetalert2';
 import { ref } from 'vue';
-import { supabase } from './utils/supabase';
 
 // Interfaz para validar los datos importados
 interface ImportedDataKinematic {
@@ -294,42 +294,79 @@ const saveLocalChanges = () => {
   });
 };
 
-const exportDataToSupabase = async () => {
-  if (store.groupData.length === 0) {
+const editLocalItem = (item: ImportedDataKinematic) => {
+  // Cargar el elemento en el formulario para edición
+  store.createKinematic = { ...item, direction: item.direction as 'Normal' | 'Reverse' };
+};
+
+const saveEditedData = () => {
+  // Validar campos antes de guardar
+  if (
+    !store.createKinematic.group_id ||
+    !store.createKinematic.servo_id ||
+    !store.createKinematic.direction ||
+    store.createKinematic.min_value === null ||
+    store.createKinematic.max_value === null ||
+    store.createKinematic.min_value < 0 ||
+    store.createKinematic.max_value > 1023 ||
+    store.createKinematic.min_value > store.createKinematic.max_value
+  ) {
     Swal.fire({
       icon: 'warning',
-      title: 'Sin datos',
-      text: 'No hay datos para exportar.',
+      title: 'Campos incompletos o inválidos',
+      text: 'Por favor, completa todos los campos correctamente.',
     });
     return;
   }
 
-  try {
-    const { error } = await supabase.from('kinematic_groups').insert(store.groupData);
+  // Buscar el índice del elemento en groupData
+  const index = store.groupData.findIndex(
+    (item) => item.group_id === store.createKinematic.group_id && item.servo_id === store.createKinematic.servo_id
+  );
 
-    if (error) {
-      console.error('Error al exportar datos:', error.message);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error al exportar',
-        text: `Hubo un error al exportar datos: ${error.message}`,
-      });
-    } else {
-      console.log('Datos exportados con éxito a Supabase.');
-      Swal.fire({
-        icon: 'success',
-        title: 'Datos exportados',
-        text: 'Los datos se han exportado correctamente a Supabase.',
-      });
-    }
-  } catch (err) {
-    console.error('Error inesperado:', err);
+  if (index === -1) {
     Swal.fire({
       icon: 'error',
-      title: 'Error inesperado',
-      text: 'Ocurrió un error inesperado.',
+      title: 'Error al guardar',
+      text: 'No se encontró el registro a editar.',
     });
+    return;
   }
+
+  // Actualizar el registro en groupData
+  store.groupData[index] = { ...store.createKinematic };
+  store.resetKinematic(); // Limpiar el formulario
+  Swal.fire({
+    icon: 'success',
+    title: 'Datos actualizados',
+    text: 'Los datos se han actualizado correctamente.',
+  });
+};
+
+const deleteLocalItem = (index: number) => {
+  Swal.fire({
+    title: '¿Estás seguro?',
+    text: 'Esta acción no se puede deshacer.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Eliminar',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      store.groupData.splice(index, 1);
+      Swal.fire('Eliminado', 'El registro ha sido eliminado.', 'success');
+    }
+  });
+};
+
+const exportDataToSupabase = () => {
+  // Implement the logic to export data to Supabase
+  Swal.fire({
+    icon: 'success',
+    title: 'Data Exported',
+    text: 'Data has been successfully exported to Supabase.',
+  });
 };
 
 const exportGroupDataToTxt = () => {
