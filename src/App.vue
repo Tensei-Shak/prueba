@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex justify-content-center">
+  <div class="mt-4 p-2 d-flex justify-content-center">
     <h2>Create/Edit Group Kinematic</h2>
   </div>
 
