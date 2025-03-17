@@ -136,8 +136,8 @@
 </template>
 
 <script lang="ts" setup>
-import { useKinematicStore } from '@/stores/kinematic';
-import { supabase } from '@/utils/supabase';
+import { useKinematicStore } from '@/stores/kinematic.ts';
+import { supabase } from '@/utils/supabase.ts';
 import { ref } from 'vue';
 import Swal from 'sweetalert2';
 
