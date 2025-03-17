@@ -1,5 +1,5 @@
 <template>
-  <div class="card p-4">
+  <div class="card p-4 m-5">
     <div class="d-flex justify-content-center">
       <h2>Create/Edit Group Kinematic</h2>
     </div>
@@ -73,15 +73,17 @@
               <!-- Min Value -->
               <div class="mb-3">
                 <label for="min-value" class="form-label">Min Value</label>
-                <input type="number" v-model.number="store.createKinematic.min_value" class="form-control"
-                  id="min-value" placeholder="Enter Min Value" />
+                <input type="range" v-model.number="store.createKinematic.min_value" class="form-range" id="min-value"
+                  min="0" :max="store.createKinematic.max_value" />
+                <span>{{ store.createKinematic.min_value }}</span>
               </div>
 
               <!-- Max Value -->
               <div class="mb-3">
                 <label for="max-value" class="form-label">Max Value</label>
-                <input type="number" v-model.number="store.createKinematic.max_value" class="form-control"
-                  id="max-value" placeholder="Enter Max Value" />
+                <input type="range" v-model.number="store.createKinematic.max_value" class="form-range" id="max-value"
+                  :min="store.createKinematic.min_value" max="1023" />
+                <span>{{ store.createKinematic.max_value }}</span>
               </div>
 
               <!-- Botones Save/Update -->
