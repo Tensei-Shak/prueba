@@ -21,7 +21,7 @@
 
     <!-- Exportar datos -->
     <div class="container mb-3 d-flex gap-2">
-      <button @click="exportDataToSupabase" :disabled="isLocalMode" class="btn btn-success">
+      <button @click="exportDataToSupabase" class="btn btn-success">
         Export Data to Supabase
       </button>
       <button @click="exportGroupDataToTxt" class="btn btn-info">
